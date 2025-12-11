@@ -1,5 +1,6 @@
 using SellinBE.Extensions;
-using SellinBE.Hubs;
+using Serilog;
+using Serilog.Sinks.MSSqlServer;
 
 namespace SellinBE
 {
@@ -24,11 +25,48 @@ namespace SellinBE
             builder.Services.AddChatbot();
             // ------------------------------------------------------
 
+            // PROVA CON SERILOG
+
+            string logDbConnectionString = builder.Configuration.GetConnectionString("SecurityDB") ?? throw new InvalidOperationException("Connection string not found.");
+
+            //GIOCHIAMO CON SERILOG
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Error)
+                .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Error)
+                .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
+                .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Error)
+                .WriteTo.Console()
+                .WriteTo.MSSqlServer(connectionString: logDbConnectionString, sinkOptions: new MSSqlServerSinkOptions
+                {
+                    TableName = "ErrorLog",
+                    AutoCreateSqlTable = true,
+                    SchemaName = "dbo",
+                })
+                .CreateLogger();
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog();
+            
+
+            //
+            /*Log.Logger = new LoggerConfiguration()
+                        .MinimumLevel.Information()
+                        .WriteTo.Console()
+                        .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+                        .CreateLogger();
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog();*/
+            //
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(); 
-            
+            builder.Services.AddSwaggerGen();
+
             var app = builder.Build();
+
+            //PROVIAMO A USARE ERRORMANAGER
+            app.UseMiddleware<ErrorManager>();
+            //
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
