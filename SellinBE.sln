@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SellinBE", "SellinBE.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityLib", "..\SecurityLib\SecurityLib.csproj", "{E4295545-CDD4-4170-ADF4-E061624B0428}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatLib", "..\ChatLib\ChatLib.csproj", "{73CD1D7F-7A2B-4EF9-8E9C-2602DE6C43DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{E4295545-CDD4-4170-ADF4-E061624B0428}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4295545-CDD4-4170-ADF4-E061624B0428}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4295545-CDD4-4170-ADF4-E061624B0428}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73CD1D7F-7A2B-4EF9-8E9C-2602DE6C43DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73CD1D7F-7A2B-4EF9-8E9C-2602DE6C43DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73CD1D7F-7A2B-4EF9-8E9C-2602DE6C43DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73CD1D7F-7A2B-4EF9-8E9C-2602DE6C43DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SecurityLib;
 using SecurityLib.Models;
+using SellinBE.Models;
+using SellinBE.Models.Data;
 using SellinBE.Models.Dtos;
 using System.Data;
 using System.Security.Claims;
@@ -35,9 +38,9 @@ namespace SellinBE.Controllers
         }
 
         [HttpPost]
-        public ActionResult Login(LoginDto login)
+        public async Task<ActionResult> Login(LoginDto login)
         {
-            Credential credential = _databaseService.ReadCredentialsOnDb(login.EmailAddress);
+            Credential credential = await _databaseService.ReadCredentialsOnDb(login.EmailAddress);
 
             bool login_result;
             if (credential == null)

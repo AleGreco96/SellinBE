@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
+using SecurityLib;
+using SecurityLib.Models;
 using SellinBE.Models;
 using SellinBE.Models.Data;
 using SellinBE.Models.Dtos;
+using Credential = SecurityLib.Models.Credential;
 
 
 namespace SellinBE.Controllers
@@ -14,10 +18,16 @@ namespace SellinBE.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly SellinProductionContext _context;
+        private readonly DatabaseService _databaseService;
+        private readonly CryptographyService _cryptographyService;
 
-        public CustomersController(SellinProductionContext context)
+        public CustomersController(SellinProductionContext context, 
+                                   DatabaseService databaseService,
+                                   CryptographyService cryptography)
         {
             _context = context;
+            _databaseService = databaseService;
+            _cryptographyService = cryptography;
         }
 
         // GET: api/Customers
@@ -108,6 +118,7 @@ namespace SellinBE.Controllers
 
             var customersQuery = _context.Customers
                 .AsNoTracking()
+                .Where(c => c.IsActive)
                 .Select(c => new CustomerDto
                 {
                     CustomerId = c.CustomerId,
@@ -125,15 +136,6 @@ namespace SellinBE.Controllers
                         AddressType = ca.AddressType,
                     }).ToList(),
                 })
-                .Where(c => string.IsNullOrEmpty(search)
-                        || c.FirstName.ToLower().Contains(search)
-                        || (c.MiddleName != null && c.MiddleName.ToLower().Contains(search))
-                        || c.LastName.ToLower().Contains(search)
-                        || (c.Title != null && c.Title.ToLower().Contains(search))
-                        || (c.Suffix != null && c.Suffix.ToLower().Contains(search))
-                        || (c.CompanyName != null && c.CompanyName.ToLower().Contains(search))
-                        || (c.EmailAddress != null && c.EmailAddress.ToLower().Contains(search))
-                        || (searchId.HasValue && c.CustomerId == searchId.Value))
                 .OrderBy(c => c.CustomerId)
                 .Skip(skip)
                 .Take(take)
@@ -152,15 +154,7 @@ namespace SellinBE.Controllers
             search = search?.ToLower() ?? "";
             int? searchId = int.TryParse(search, out var id) ? id : null;
 
-            return _context.Customers.Where(c => string.IsNullOrEmpty(search)
-                        || c.FirstName.ToLower().Contains(search)
-                        || (c.MiddleName != null && c.MiddleName.ToLower().Contains(search))
-                        || c.LastName.ToLower().Contains(search)
-                        || (c.Title != null && c.Title.ToLower().Contains(search))
-                        || (c.Suffix != null && c.Suffix.ToLower().Contains(search))
-                        || (c.CompanyName != null && c.CompanyName.ToLower().Contains(search))
-                        || (c.EmailAddress != null && c.EmailAddress.ToLower().Contains(search))
-                        || (searchId.HasValue && c.CustomerId == searchId.Value)).Count();
+            return _context.Customers.Where(c => c.IsActive).Count();
         }
 
         [Authorize(Policy = "AdminPolicy")]
@@ -216,9 +210,79 @@ namespace SellinBE.Controllers
             return NoContent();
         }
 
+        [HttpPost("SignUp")]
+        public async Task<ActionResult> RegisterNewCustomer(SignUpDto signUp)
+        {
+            // aggiungere utente anche al database della sicurezza
+            // mettere in inglese gli errori di validazione nel client
+
+            bool isEmailInDb;
+
+            isEmailInDb = await _context.Customers.AnyAsync(c => c.EmailAddress == signUp.Email);
+
+            if (isEmailInDb)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "Email Already in Use!"
+                });
+            }
+            else
+            {
+                Customer customer = new()
+                {
+                    Title = signUp.Title,
+                    FirstName = signUp.FirstName,
+                    MiddleName = signUp.MiddleName,
+                    LastName = signUp.LastName,
+                    CompanyName = signUp.Company,
+                    EmailAddress = signUp.Email,
+                    Phone = signUp.Phone,
+                    IsActive = true
+                };
+
+                _context.Customers.Add(customer);
+                await _context.SaveChangesAsync();
+
+                int newCustomerId = _context.Customers.Where(c => (c.EmailAddress == signUp.Email))
+                                            .Select(c => c.CustomerId)
+                                            .FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(signUp.Email))
+                    throw new ArgumentNullException(nameof(signUp.Email));
+
+                if (string.IsNullOrWhiteSpace(signUp.Password))
+                    throw new ArgumentNullException(nameof(signUp.Password));
+
+                var passwordPair = _cryptographyService.EncryptPassword(signUp.Password);
+
+                Credential credential = new()
+                {
+                    CustomerId = newCustomerId,
+                    EmailAddress = signUp.Email,
+                    PasswordHash = passwordPair.Value,
+                    PasswordSalt = passwordPair.Key,
+                    Role = "User",
+                    ModifiedDate = DateTime.Now
+                };
+
+
+                _databaseService.AddCredentialsOnDb(credential);
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "SUCCESS"
+                });
+            }
+
+        }
+
         private bool CustomerExists(int id)
         {
             return _context.Customers.Any(e => e.CustomerId == id);
         }
     }
 }
+
