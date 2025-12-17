@@ -1,17 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SecurityLib;
 using SellinBE.Models;
 
 namespace SellinBE.Extensions
 {
-    public static class ContextExtensions
+    public static class DatabaseExtensions
     {
         public static IServiceCollection AddProductionDb(this IServiceCollection services, IConfiguration config)
         {
-            var ProdCnnString = config.GetConnectionString("ProductionDB");
-
-            if (string.IsNullOrEmpty(ProdCnnString))
-                throw new InvalidOperationException("The connection string 'ProductionDB' is not defined in the configuration file.");
+            var ProdCnnString = config.GetConnectionString("ProductionDB") ?? throw new InvalidOperationException("Connection string not found.");
 
             services.AddDbContext<SellinProductionContext>(options =>
                 options.UseSqlServer(ProdCnnString)

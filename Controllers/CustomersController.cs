@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
-using SecurityLib;
-using SecurityLib.Models;
+using SecurityLib.Services;
 using SellinBE.Models;
 using SellinBE.Models.Data;
 using SellinBE.Models.Dtos;

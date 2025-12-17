@@ -1,13 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using SecurityLib;
+using SecurityLib.Services;
 using SecurityLib.Models;
-using SellinBE.Models;
-using SellinBE.Models.Data;
 using SellinBE.Models.Dtos;
-using System.Data;
-using System.Security.Claims;
 
 namespace SellinBE.Controllers
 {
@@ -34,6 +28,11 @@ namespace SellinBE.Controllers
         [HttpGet]
         public KeyValuePair<string, string> SaltAndHash(string password)
         {
+            int a = 10;
+            int b = 0;
+
+            Console.WriteLine(a / b);
+
             return _cryptographyService.EncryptPassword(password);
         }
 
@@ -68,7 +67,7 @@ namespace SellinBE.Controllers
                 return Unauthorized(new
                 {
                     Success = false,
-                    Message = "Wrong Credentials"
+                    Message = "Wrong Credentials."
                 });
             }
         }
